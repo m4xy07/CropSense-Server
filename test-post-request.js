@@ -49,7 +49,7 @@ function postData() {
   };
 
   axios
-    .post("http://139.59.114.190:3000/data", testData)
+    .post("http://159.65.139.84:3000/data", testData)
     .then((response) => {
       console.log("Data posted successfully:", response.data);
     })
