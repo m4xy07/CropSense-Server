@@ -144,55 +144,62 @@ app.get('/ui', async (req, res) => {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>CropSense Data Server</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            line-height: 1.6;
-          }
-          h1 {
-            color: #388E3C;
-          }
-          .container {
-            max-width: 800px;
-            margin: 0 auto;
-          }
-          pre {
-            background-color: #f4f4f4;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-          }
-          .endpoint {
-            font-weight: bold;
-          }
-          .error {
-            color: red;
-          }
-        </style>
+      <title>CropSense - Data API</title>
+      <meta name="description" content="API Data Endpoint for CropSense">
+      <meta name="author" content="m4xy07">
+      <meta name="keywords" content="CropSense, API, Data, Agriculture, Weather">
+      <meta property="og:title" content="CropSense - Data API">
+      <meta property="og:description" content="API Data Endpoint for CropSense">
+      <meta property="og:image" content="/public/Logo_CropSense_240x240.png">
+      <link rel="icon" href="/favicon.ico" type="image/x-icon">
+      <style>
+        body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        line-height: 1.6;
+        }
+        h1 {
+        color: #388E3C;
+        }
+        .container {
+        max-width: 800px;
+        margin: 0 auto;
+        }
+        pre {
+        background-color: #f4f4f4;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+        }
+        .endpoint {
+        font-weight: bold;
+        }
+        .error {
+        color: red;
+        }
+      </style>
       </head>
       <body>
-        <div class="container">
-          <h1>CropSense Data Server</h1>
-          <p>This server collects and provides agricultural sensor data.</p>
-          
-          <h2>API Endpoints:</h2>
-          <ul>
-            <li><span class="endpoint">GET /api/data</span> - Retrieve all stored weather data</li>
-            <li><span class="endpoint">POST /</span> - Submit new weather data</li>
-          </ul>
-          
-          <h2>Status:</h2>
-          <p>Server is running on <strong>https://data.cropsense.tech</strong></p>
-          
-          <h2>Recent Data:</h2>
-          <div id="recent-data">
-            <pre>${JSON.stringify(recentData, null, 2)}</pre>
-          </div>
-          
-          <p><a href="/api/data" target="_blank">View all data (JSON)</a></p>
+      <div class="container">
+        <h1>CropSense Data Server</h1>
+        <p>This server collects and provides agricultural sensor data.</p>
+        
+        <h2>API Endpoints:</h2>
+        <ul>
+        <li><span class="endpoint">GET /api/data</span> - Retrieve all stored weather data</li>
+        <li><span class="endpoint">POST /</span> - Submit new weather data</li>
+        </ul>
+        
+        <h2>Status:</h2>
+        <p>Server is running on <strong>https://data.cropsense.tech</strong></p>
+        
+        <h2>Recent Data:</h2>
+        <div id="recent-data">
+        <pre>${JSON.stringify(recentData, null, 2)}</pre>
         </div>
+        
+        <p><a href="/api/data" target="_blank">View all data (JSON)</a></p>
+      </div>
       </body>
       </html>
     `);
@@ -201,7 +208,9 @@ app.get('/ui', async (req, res) => {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>CropSense Data Server</title>
+        <title>CropSense - Data API</title>
+        <meta name="description" content="API Data Endpoint for CropSense">
+        <link rel="icon" href="/favicon.ico" type="image/x-icon">
         <style>
           body {
             font-family: Arial, sans-serif;
