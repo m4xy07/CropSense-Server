@@ -1,0 +1,13 @@
+[Unit]
+Description=CropSense Node.js Server
+After=network.target mongodb.service
+
+[Service]
+ExecStart=/usr/bin/node /root/CropSense-Server/server.js
+WorkingDirectory=/root/CropSense-Server
+Restart=always
+User=root
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
