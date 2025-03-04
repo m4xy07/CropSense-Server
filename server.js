@@ -60,9 +60,14 @@ app.post('/', async (req, res) => {
   // Print out the JSON data being received
   console.log('Received JSON data:', req.body);
 
+  // Check if time is null
+  if (!req.body.time) {
+    return res.status(400).send('Error: "time" field cannot be null');
+  }
+
   // Create a new weather document
   const newWeatherData = new WeatherData({
-    time: req.body.time || null,
+    time: req.body.time,
     temperature: req.body.temperature || null,
     humidity: req.body.humidity || null,
     aqi: req.body.aqi || null,
