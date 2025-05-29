@@ -3,20 +3,20 @@
 echo "Setting up CropSense Server for domain data.cropsense.tech"
 
 # Make sure scripts are executable
-chmod +x /root/ssl/generate-cert.sh
-chmod +x /root/ssl/setup-letsencrypt.sh
-chmod +x /root/check-and-configure-firewall.sh
-chmod +x /root/verify-dns.sh
-chmod +x /root/create-public-directory.sh
-chmod +x /root/test-api.sh
+chmod +x ./scripts/ssl/generate-cert.sh
+chmod +x ./scripts/ssl/setup-letsencrypt.sh
+chmod +x ./scripts/setup/firewall.sh
+chmod +x ./scripts/setup/verify-dns.sh
+chmod +x ./scripts/create-public-directory.sh
+chmod +x ./scripts/utils/test-api.sh
 
 # Check and configure firewall
 echo "Checking and configuring firewall..."
-/root/check-and-configure-firewall.sh
+./scripts/setup/firewall.sh
 
 # Verify DNS configuration
 echo "Verifying DNS configuration..."
-/root/verify-dns.sh
+./scripts/setup/verify-dns.sh
 
 # Make sure DNS record points to this server's IP
 echo "Please ensure your DNS A record for data.cropsense.tech points to this server's IP address."
@@ -43,17 +43,17 @@ echo "Creating public directory and files..."
 
 # Update public directory with index.html
 echo "Updating public directory and files..."
-chmod +x /root/update-public-directory.sh
-/root/update-public-directory.sh
+chmod +x ./scripts/setup/update-public-dir.sh
+./scripts/setup/update-public-dir.sh
 
 # Seed the database with sample data
 echo "Seeding the database with sample data..."
-chmod +x /root/seed-database.sh
-/root/seed-database.sh
+chmod +x ./scripts/utils/seed-database.sh
+./scripts/utils/seed-database.sh
 
 # Set up Let's Encrypt certificate
 echo "Setting up SSL certificate using Let's Encrypt..."
-/root/ssl/setup-letsencrypt.sh
+./scripts/ssl/setup-letsencrypt.sh
 
 # Create systemd service file if it doesn't exist
 if [ ! -f "/etc/systemd/system/cropsense.service" ]; then

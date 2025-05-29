@@ -1,0 +1,18 @@
+[0;1;32m●[0m cropsense.service - CropSense Node.js Server
+     Loaded: loaded (]8;;file://Backend/etc/systemd/system/cropsense.service/etc/systemd/system/cropsense.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Thu 2025-05-29 09:29:38 UTC; 26s ago
+ Invocation: c2faf0674d6c40a2927e1ce6f6fa06de
+   Main PID: 11176 (node)
+      Tasks: 11 (limit: 9486)
+     Memory: 29.5M (peak: 41.2M)
+        CPU: 688ms
+     CGroup: /system.slice/cropsense.service
+             └─[0;38;5;245m11176 /usr/bin/node /root/CropSense-Server/server.js[0m
+
+May 29 09:29:38 Backend systemd[1]: Started cropsense.service - CropSense Node.js Server.
+May 29 09:29:38 Backend node[11176]: Could not start HTTPS server: ENOENT: no such file or directory, open '/root/CropSense-Server/ssl/server.key'
+May 29 09:29:38 Backend node[11176]: Please run the SSL certificate setup script first
+May 29 09:29:38 Backend node[11176]: (node:11176) [MONGODB DRIVER] Warning: useNewUrlParser is a deprecated option: useNewUrlParser has no effect since Node.js Driver version 4.0.0 and will be removed in the next major version
+May 29 09:29:38 Backend node[11176]: (Use `node --trace-warnings ...` to show where the warning was created)
+May 29 09:29:38 Backend node[11176]: (node:11176) [MONGODB DRIVER] Warning: useUnifiedTopology is a deprecated option: useUnifiedTopology has no effect since Node.js Driver version 4.0.0 and will be removed in the next major version
+May 29 09:29:38 Backend node[11176]: HTTP server is running on port 80

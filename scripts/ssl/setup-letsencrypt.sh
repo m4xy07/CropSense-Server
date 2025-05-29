@@ -5,10 +5,10 @@ sudo apt update
 sudo apt install -y certbot
 
 # Ensure ports are open in firewall
-sudo bash /root/check-and-configure-firewall.sh
+sudo bash ./scripts/setup/firewall.sh
 
 # Verify DNS settings before proceeding
-sudo bash /root/verify-dns.sh
+sudo bash ./scripts/setup/verify-dns.sh
 
 echo "Would you like to proceed with certificate setup? (y/n)"
 read -r proceed
@@ -54,7 +54,7 @@ if [ -d /etc/letsencrypt/live/data.cropsense.tech ]; then
 else
     echo "Failed to obtain certificate. Falling back to self-signed certificate."
     # Generate self-signed certificate as fallback
-    bash /root/ssl/generate-cert.sh
+    bash ./scripts/ssl/generate-cert.sh
     echo "Self-signed certificate has been generated. Note that browsers will show a warning for self-signed certificates."
 fi
 
