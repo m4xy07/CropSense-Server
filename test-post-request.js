@@ -143,6 +143,7 @@ function cropPriceRanges(crop) {
   }
 }
 
+// Legacy seasonal moisture estimate (kept for reference); we use a stateful version below.
 function computeMoisture(monthIdx, raining) {
   let base;
   if ([6, 7, 8, 9].includes(monthIdx)) base = randRange(40, 60); // monsoon
@@ -152,18 +153,50 @@ function computeMoisture(monthIdx, raining) {
   return Math.min(80, Math.max(5, base));
 }
 
-function decideRaining(monthIdx, rh, hour) {
+// Stateful moisture evolution to ensure continuity and realism
+function nextMoisture(prevMoisture, monthIdx, raining, temperature, rh) {
+  // Seasonal target
+  let target;
+  if ([6, 7, 8, 9].includes(monthIdx)) target = 55;
+  else if ([10, 11, 0].includes(monthIdx)) target = 35;
+  else target = 25;
+
+  let moisture = prevMoisture ?? jitter(target, 10);
+
+  // Rain adds, evaporation subtracts (more when hotter and drier)
+  if (raining === "yes") moisture += randRange(2, 6);
+  const evap = Math.max(0, (temperature - 25) * 0.12) + Math.max(0, (60 - rh) * 0.04);
+  moisture -= evap;
+
+  // Pull towards seasonal target a bit
+  moisture += (target - moisture) * 0.05;
+
+  return Math.min(85, Math.max(5, moisture));
+}
+
+function decideRaining(monthIdx, rh, hour, prevWasRaining) {
   const { rainProb } = monthlyClimateParams(monthIdx);
   // Slightly higher chance late afternoon/evening in monsoon due to convection
   const diurnalBoost = [6, 7, 8, 9].includes(monthIdx) && hour >= 14 && hour <= 21 ? 0.1 : 0;
   const rhBoost = rh > 75 ? 0.05 : 0;
-  const p = Math.min(0.95, rainProb + diurnalBoost + rhBoost);
+  // Persistence effect: once raining, tends to continue; otherwise slight inertia to start
+  const persistence = prevWasRaining ? 0.2 : -0.05;
+  const p = Math.max(0.01, Math.min(0.98, rainProb + diurnalBoost + rhBoost + persistence));
   return Math.random() < p ? "yes" : "no";
 }
 
-function computeAQI(monthIdx) {
+function computeAQI(monthIdx, hour, raining, prevAQI) {
   const { aqiBase } = monthlyClimateParams(monthIdx);
-  return Math.max(20, jitter(aqiBase, 20)); // allow variability
+  let aqi = aqiBase;
+  if (raining === "yes") aqi -= 20; // washout
+  if (hour >= 7 && hour <= 10) aqi += 10; // morning commute
+  if (hour >= 18 && hour <= 21) aqi += 8; // evening commute
+  if (hour >= 0 && hour <= 4) aqi -= 10; // late night clean air
+  aqi = Math.max(20, aqi);
+  aqi = jitter(aqi, 10);
+  // Smooth with previous hour to avoid abrupt changes
+  if (typeof prevAQI === "number") aqi = 0.7 * aqi + 0.3 * prevAQI;
+  return aqi;
 }
 
 function computeWifiStrength() {
@@ -189,29 +222,69 @@ function computeNPKUptake(crop) {
   }
 }
 
+// Track daily state to enforce smoothness and realism across hours of the same day
+let currentDayKey = null;
+let dayState = null; // { month, tMean, tAmp, rhMean, rhAmp, dailyTempBias, dailyRhBias }
+let prevHourState = null; // previous payload for smoothing and persistence
+
+function istDayKey(dateIST) {
+  const y = dateIST.getFullYear();
+  const m = String(dateIST.getMonth() + 1).padStart(2, "0");
+  const d = String(dateIST.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function resetDayState(istDate) {
+  const month = istDate.getMonth();
+  const { tMean, tAmp, rhMean, rhAmp } = monthlyClimateParams(month);
+  const dailyTempBias = randRange(-1.5, 1.5);
+  const dailyRhBias = randRange(-5, 5);
+  const ampScale = randRange(0.9, 1.15);
+  dayState = { month, tMean, tAmp: tAmp * ampScale, rhMean, rhAmp: rhAmp * ampScale, dailyTempBias, dailyRhBias };
+  prevHourState = null;
+}
+
 function makeTestData(utcDate) {
   const istDate = toIST(utcDate);
-  const month = istDate.getMonth();
   const hour = istDate.getHours();
+  const dayKey = istDayKey(istDate);
+  if (dayKey !== currentDayKey) {
+    currentDayKey = dayKey;
+    resetDayState(istDate);
+  }
 
-  const { tMean, tAmp, rhMean, rhAmp } = monthlyClimateParams(month);
-  // Diurnal temperature and humidity
-  let temperature = diurnal(tMean, tAmp, hour);
-  temperature = jitter(temperature, 5);
-  let humidity = diurnal(rhMean, rhAmp, 24 - hour, 0); // inverse-ish shape
-  humidity = Math.max(20, Math.min(98, jitter(humidity, 8)));
+  const { month, tMean, tAmp, rhMean, rhAmp, dailyTempBias, dailyRhBias } = dayState;
 
-  const raining = decideRaining(month, humidity, hour);
-  const aqi = computeAQI(month);
-  const alt = jitter(PUNE_ALTITUDE_M, 1); // +/-1%
-  const pres = jitter(pressureAtAltitude(PUNE_ALTITUDE_M), 1.5); // small weather variation
-  const moisture = computeMoisture(month, raining);
+  // Temperature: diurnal + daily bias, then lightly smoothed with previous hour
+  let tempDiurnal = diurnal(tMean + dailyTempBias, tAmp, hour);
+  let temperature = jitter(tempDiurnal, 2.0);
+  if (prevHourState) temperature = 0.8 * temperature + 0.2 * prevHourState.temperature;
+
+  // Humidity inversely related diurnally + daily bias, also smoothed
+  let rhDiurnal = diurnal(rhMean + dailyRhBias, rhAmp, 24 - hour, 0);
+  let humidity = Math.max(25, Math.min(98, jitter(rhDiurnal, 5)));
+  if (prevHourState) humidity = 0.8 * humidity + 0.2 * prevHourState.humidity;
+
+  // Rain decision with persistence
+  const prevWasRaining = prevHourState?.raining === "yes";
+  const raining = decideRaining(month, humidity, hour, prevWasRaining);
+
+  // AQI influenced by raining/time and smoothed with previous
+  const aqi = computeAQI(month, hour, raining, prevHourState?.aqi);
+
+  // Pressure around altitude baseline
+  const alt = jitter(PUNE_ALTITUDE_M, 0.8);
+  const pres = jitter(pressureAtAltitude(PUNE_ALTITUDE_M), 1.2);
+
+  // Stateful soil moisture
+  const moisture = nextMoisture(prevHourState?.moisture, month, raining, temperature, humidity);
+
   const wifi_strength = computeWifiStrength();
 
+  // Crops and prices
   const best_crop = chooseBestCrop(month);
   const recommended_fertilizer = FERTILIZER_BY_CROP[best_crop] || "NPK 15-15-15";
   const npk = computeNPKUptake(best_crop);
-
   const harvestMonths = cropHarvestableMonths(best_crop);
   const priceRanges = cropPriceRanges(best_crop);
   const harvestable_months = harvestMonths.map((m) => ({
@@ -222,7 +295,7 @@ function makeTestData(utcDate) {
 
   const hi = computeHeatIndexC(temperature, humidity);
 
-  return {
+  const payload = {
     time: utcDate.toISOString(),
     temperature,
     humidity,
@@ -240,27 +313,33 @@ function makeTestData(utcDate) {
     npk_uptake_potassium: npk.K,
     harvestable_months,
   };
+
+  prevHourState = { ...payload };
+  return payload;
 }
 
-// Generate roughly 24 readings per day (one per hour with random minute/second) from 2025-07-01 00:00 IST to now (IST)
+// Generate exactly one reading per IST hour (24/day) from 2025-07-01 00:00 IST to the last completed IST hour
 function generateISTHourlyTimestamps() {
   const offsetMs = IST_OFFSET_MINUTES * 60 * 1000;
   const hourMs = 60 * 60 * 1000;
 
   // Start at 2025-07-01 00:00 IST
-  const startISTClockMs = Date.UTC(2025, 6, 1, 0, 0, 0, 0); // treated as IST clock ms
-  // End at current IST time
-  const endISTClockMs = Date.now() + offsetMs;
+  const startISTClockMs = Date.UTC(2025, 6, 1, 0, 0, 0, 0);
+  // End at last completed IST hour
+  const now = new Date(Date.now() + offsetMs);
+  now.setMinutes(0, 0, 0);
+  const endISTClockMs = now.getTime();
 
   const dates = [];
   for (let istMs = startISTClockMs; istMs <= endISTClockMs; istMs += hourMs) {
-    // Randomize within the hour to be "around" hourly
-    const minute = Math.floor(Math.random() * 60);
-    const second = Math.floor(Math.random() * 60);
-    const candidateIstMs = istMs + minute * 60_000 + second * 1_000;
-    if (candidateIstMs > endISTClockMs) break; // don't go past now IST
-
-    // Convert IST clock time to UTC instant
+    // Randomize minutes and seconds within the hour
+    let minute = Math.floor(Math.random() * 60);
+    let second = Math.floor(Math.random() * 60);
+    let candidateIstMs = istMs + minute * 60_000 + second * 1_000;
+    // Clamp if beyond boundary
+    if (candidateIstMs > endISTClockMs) {
+      candidateIstMs = Math.min(endISTClockMs, istMs + 59 * 60_000 + 59 * 1_000);
+    }
     const utcMs = candidateIstMs - offsetMs;
     dates.push(new Date(utcMs));
   }
