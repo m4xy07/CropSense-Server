@@ -3,20 +3,20 @@
 echo "Setting up CropSense Server for domain data.cropsense.tech"
 
 # Make sure scripts are executable
-chmod +x /root/ssl/generate-cert.sh
-chmod +x /root/ssl/setup-letsencrypt.sh
-chmod +x /root/check-and-configure-firewall.sh
-chmod +x /root/verify-dns.sh
+chmod +x /root/scripts/ssl/generate-cert.sh
+chmod +x /root/scripts/ssl/setup-letsencrypt.sh
+chmod +x /root/scripts/setup/configure-firewall.sh
+chmod +x /root/scripts/setup/verify-dns.sh
 chmod +x /root/create-public-directory.sh
 chmod +x /root/test-api.sh
 
 # Check and configure firewall
 echo "Checking and configuring firewall..."
-/root/check-and-configure-firewall.sh
+/root/scripts/setup/configure-firewall.sh
 
 # Verify DNS configuration
 echo "Verifying DNS configuration..."
-/root/verify-dns.sh
+/root/scripts/setup/verify-dns.sh
 
 # Make sure DNS record points to this server's IP
 echo "Please ensure your DNS A record for data.cropsense.tech points to this server's IP address."
