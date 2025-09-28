@@ -4,8 +4,8 @@ echo "Deploying changes to CropSense Server..."
 
 # Update the public directory to remove any redirects
 echo "Updating public directory..."
-chmod +x /root/update-public-directory.sh
-/root/update-public-directory.sh
+chmod +x ../../scripts/setup/update-public.sh
+../../scripts/setup/update-public.sh
 
 # Check if the database has data
 echo "Checking database..."
@@ -30,8 +30,8 @@ cd /root/CropSense-Server
 
 # if [ $? -ne 0 ]; then
 #   echo "Seeding database with sample data..."
-#   chmod +x /root/seed-database.sh
-#   /root/seed-database.sh
+#   chmod +x ../../scripts/utils/seed-database.sh
+#   ../../scripts/utils/seed-database.sh
 # fi
 
 # Restart the server
@@ -43,11 +43,11 @@ sleep 2
 echo "Checking service status:"
 sudo systemctl status cropsense.service --no-pager -l | head -n 20
 
-# Create and run the check script
-echo "Creating server response check script..."
-chmod +x /root/check-server-response.sh
-
 echo -e "\nChecking server responses:"
+# Create and run the check script
+echo "Checking server responses..."
+chmod +x ../../scripts/utils/check-response.sh
+../../scripts/utils/check-response.sh
 /root/check-server-response.sh
 
 echo -e "\nDeployment complete!"
